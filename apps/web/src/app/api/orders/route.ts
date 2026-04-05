@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: "One or more items are unavailable" }, { status: 400 });
   }
 
-  const menuMap = new Map(menuItems.map((m) => [m.id, m]));
+  const menuMap = new Map(menuItems.map((m) => [m.id, m] as const));
   const totalAmount = items.reduce((sum, item) => {
     return sum + Number(menuMap.get(item.menuItemId)!.price) * item.quantity;
   }, 0);
