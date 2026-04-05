@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git push*)",
+            "command": "node scripts/deploy-agent.mjs",
+            "async": true,
+            "statusMessage": "Watching Vercel deployment...",
+            "timeout": 600
+          }
+        ]
+      }
+    ]
+  }
+}

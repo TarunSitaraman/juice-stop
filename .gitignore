@@ -49,6 +49,9 @@ yarn-error.log*
 Thumbs.db
 desktop.ini
 
+# ─── Claude Code ──────────────────────────────────────────────────────────────
+.claude/settings.local.json
+
 # ─── Editor ───────────────────────────────────────────────────────────────────
 .vscode/settings.json
 .idea
