@@ -1,0 +1,101 @@
+// Juice Stop — Prisma Schema
+// Database: Neon PostgreSQL
+// ORM: Prisma 6
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Neon requires directUrl for migrations
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  PENDING
+  IN_PREPARATION
+  SENT_FOR_DELIVERY
+  COMPLETED
+  REJECTED
+}
+
+enum StaffRole {
+  ADMIN
+  STAFF
+}
+
+// ─── Menu ─────────────────────────────────────────────────────────────────────
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String
+  slug      String     @unique
+  sortOrder Int        @default(0) @map("sort_order")
+  items     MenuItem[]
+
+  @@map("categories")
+}
+
+model MenuItem {
+  id          String      @id @default(cuid())
+  categoryId  String      @map("category_id")
+  name        String
+  description String?
+  price       Decimal     @db.Decimal(10, 2)
+  imageUrl    String?     @map("image_url")
+  available   Boolean     @default(true)
+  sortOrder   Int         @default(0) @map("sort_order")
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+
+  @@map("menu_items")
+}
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+
+model Order {
+  id              String      @id @default(cuid())
+  ticketId        String      @unique @map("ticket_id") // e.g. JC-0001
+  customerPhone   String      @map("customer_phone")
+  deliveryAddress String      @map("delivery_address")
+  deliveryNotes   String?     @map("delivery_notes")
+  status          OrderStatus @default(PENDING)
+  proofImageUrl   String?     @map("proof_image_url")
+  totalAmount     Decimal     @map("total_amount") @db.Decimal(10, 2)
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+  items           OrderItem[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String   @map("order_id")
+  menuItemId String   @map("menu_item_id")
+  quantity   Int
+  unitPrice  Decimal  @map("unit_price") @db.Decimal(10, 2)
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+
+  @@map("order_items")
+}
+
+// ─── Staff ────────────────────────────────────────────────────────────────────
+
+model Staff {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         StaffRole @default(STAFF)
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@map("staff")
+}
