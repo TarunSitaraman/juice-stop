@@ -1,16 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { formatPrice, formatDate, ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock, Bike, XCircle, ChefHat, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { io } from "socket.io-client";
 import { cn } from "@/lib/utils";
-import type { OrderStatus } from "@juice-stop/shared";
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
   PENDING: <Clock className="w-8 h-8 text-yellow-500" />,
@@ -24,31 +21,17 @@ export default function OrderStatusPage() {
   const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const ticketId = searchParams.get("ticket");
-  const queryClient = useQueryClient();
 
   const { data: order, isLoading } = useQuery({
     queryKey: ["order", id],
     queryFn: () => api.getOrder(id),
+    // Poll every 10s until terminal status
     refetchInterval: (query) => {
       const status = query.state.data?.status;
       if (status === "COMPLETED" || status === "REJECTED") return false;
-      return 15_000; // poll every 15s as fallback
+      return 10_000;
     },
   });
-
-  // Real-time status updates via Socket.io
-  useEffect(() => {
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL ?? "");
-    socket.emit("track_order", id);
-    socket.on("order_updated", (event: { orderId: string; status: OrderStatus }) => {
-      if (event.orderId === id) {
-        queryClient.setQueryData(["order", id], (prev: typeof order) =>
-          prev ? { ...prev, status: event.status } : prev
-        );
-      }
-    });
-    return () => { socket.disconnect(); };
-  }, [id, queryClient]);
 
   if (isLoading) {
     return (
@@ -90,17 +73,15 @@ export default function OrderStatusPage() {
         <div className="text-3xl font-black text-brand-500 mb-1">
           {ticketId ?? order.ticketId}
         </div>
-        <span
-          className={cn(
-            "inline-block rounded-full px-3 py-1 text-xs font-semibold",
-            ORDER_STATUS_COLOR[order.status] ?? "bg-gray-100 text-gray-700"
-          )}
-        >
+        <span className={cn(
+          "inline-block rounded-full px-3 py-1 text-xs font-semibold",
+          ORDER_STATUS_COLOR[order.status] ?? "bg-gray-100 text-gray-700"
+        )}>
           {ORDER_STATUS_LABEL[order.status] ?? order.status}
         </span>
         {!isTerminal && (
           <p className="text-xs text-gray-400 mt-3 animate-pulse">
-            Checking for updates automatically…
+            Checking for updates every 10 seconds…
           </p>
         )}
       </div>
@@ -111,12 +92,8 @@ export default function OrderStatusPage() {
         <div className="space-y-2">
           {order.items.map((item) => (
             <div key={item.id} className="flex justify-between text-sm">
-              <span className="text-gray-700">
-                {item.menuItem.name} × {item.quantity}
-              </span>
-              <span className="font-medium">
-                {formatPrice(Number(item.unitPrice) * item.quantity)}
-              </span>
+              <span className="text-gray-700">{item.menuItem.name} × {item.quantity}</span>
+              <span className="font-medium">{formatPrice(Number(item.unitPrice) * item.quantity)}</span>
             </div>
           ))}
         </div>
@@ -131,9 +108,7 @@ export default function OrderStatusPage() {
       </div>
 
       <div className="mt-6 text-center">
-        <Link href="/">
-          <Button variant="outline">Order More</Button>
-        </Link>
+        <Link href="/"><Button variant="outline">Order More</Button></Link>
       </div>
     </div>
   );

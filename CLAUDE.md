@@ -53,14 +53,14 @@ juice-stop/  (root = C:\Users\Tarun\Documents\juicestop\juice stop)
 - **Socket.io client** for real-time order push
 - Deployed via **Expo EAS**
 
-### Backend API (`packages/api`)
-- **Node.js + Express.js**
-- **Socket.io** for WebSocket server (restaurant rooms)
+### Backend API (`apps/web/app/api/`)
+- **Next.js Route Handlers** (no Express — runs on Vercel Functions)
 - **Prisma** ORM with parameterized queries (no raw SQL)
 - **JWT + bcrypt** for restaurant staff auth
-- **Multer** for file upload handling
-- **express-rate-limit** + Redis for rate limiting
-- Deployed to **Railway** (required for persistent WebSocket connections — Vercel Functions are stateless)
+- **@upstash/ratelimit** for rate limiting (serverless-compatible)
+- **@vercel/blob** for payment proof photo uploads
+- Deployed to **Vercel** as part of the Next.js app
+- No WebSockets — restaurant mobile app uses polling (every 5s)
 
 ### Database (`packages/db`)
 - **Neon PostgreSQL** — primary database

@@ -1,6 +1,10 @@
 import type { Category, Order, CreateOrderPayload, ApiResponse } from "@juice-stop/shared";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
+// Relative URLs work in the browser (same origin) and for SSR on Vercel.
+// For the mobile app, set NEXT_PUBLIC_API_URL to the Vercel deployment URL.
+const BASE = typeof window === "undefined"
+  ? (process.env.NEXT_PUBLIC_API_URL ?? "")
+  : "";
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
