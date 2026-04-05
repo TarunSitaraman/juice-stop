@@ -7,10 +7,6 @@
     --radius: 0.5rem;
   }
 
-  * {
-    @apply border-border;
-  }
-
   body {
     @apply bg-orange-50 text-gray-900 antialiased;
     font-family: Inter, system-ui, sans-serif;
