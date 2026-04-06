@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import NavHeader from "@/components/ui/nav-header";
 
 export const metadata: Metadata = {
   title: "Juice Stop",
@@ -20,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <span className="text-2xl">🧃</span>
                   <span className="font-bold text-xl tracking-tight">Juice Stop</span>
                 </div>
-                <span className="text-sm text-orange-100">Fresh · Fast · Delivered</span>
+                <NavHeader />
               </div>
             </header>
             <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-6">
