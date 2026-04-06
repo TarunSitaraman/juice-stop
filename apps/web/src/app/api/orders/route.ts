@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   }
 
   const menuMap = new Map<string, (typeof menuItems)[number]>(
-    menuItems.map((m) => [m.id, m] as [string, (typeof menuItems)[number]])
+    menuItems.map((m) => [m.id, m])
   );
   const totalAmount = items.reduce((sum, item) => {
     return sum + Number(menuMap.get(item.menuItemId)!.price) * item.quantity;
