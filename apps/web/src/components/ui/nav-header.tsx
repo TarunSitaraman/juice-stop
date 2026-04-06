@@ -1,88 +1,68 @@
 "use client";
 
-import React, { useRef, useState } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-type Position = {
-  left: number;
-  width: number;
-  opacity: number;
-};
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { useCartStore } from "@/lib/store";
 
 const TABS = [
   { label: "Home", href: "/" },
   { label: "Order", href: "/order" },
-  { label: "Contact", href: "#contact" },
+  { label: "Cart", href: "/cart" },
 ];
 
-function NavHeader() {
-  const [position, setPosition] = useState<Position>({
-    left: 0,
-    width: 0,
-    opacity: 0,
-  });
+export default function NavHeader() {
+  const pathname = usePathname();
+  const [activeTab, setActiveTab] = useState(TABS[0].label);
+
+  const cartItems = useCartStore((state) => state.items);
+  const cartItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const currentTab = TABS.find((tab) => tab.href === pathname);
+    if (currentTab) {
+      setActiveTab(currentTab.label);
+    }
+  }, [pathname]);
 
   return (
-    <ul
-      className="relative mx-auto flex w-fit rounded-full border-2 border-white bg-transparent p-1"
-      onMouseLeave={() => setPosition((pv) => ({ ...pv, opacity: 0 }))}
-    >
+    <nav className="flex items-center space-x-1 sm:space-x-2 bg-zinc-900/40 p-1 sm:p-2 border border-white/10 rounded-full shadow-2xl shadow-blue-900/20 backdrop-blur-md">
       {TABS.map((tab) => (
-        <Tab key={tab.href} href={tab.href} setPosition={setPosition}>
-          {tab.label}
-        </Tab>
+        <Link key={tab.label} href={tab.href}>
+          <div
+            onClick={() => setActiveTab(tab.label)}
+            className={cn(
+              "relative px-4 sm:px-6 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer",
+              activeTab === tab.label
+                ? "text-white"
+                : "text-zinc-400 hover:text-white"
+            )}
+          >
+            {activeTab === tab.label && (
+              <motion.div
+                layoutId="nav-pill"
+                className="absolute inset-0 bg-blue-800 rounded-full -z-10"
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              {tab.label}
+              {tab.label === "Cart" && mounted && cartItemCount > 0 && (
+                <span className="bg-white text-blue-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                  {cartItemCount}
+                </span>
+              )}
+            </span>
+          </div>
+        </Link>
       ))}
-      <Cursor position={position} />
-    </ul>
+    </nav>
   );
 }
-
-const Tab = ({
-  children,
-  href,
-  setPosition,
-}: {
-  children: React.ReactNode;
-  href: string;
-  setPosition: React.Dispatch<React.SetStateAction<Position>>;
-}) => {
-  const ref = useRef<HTMLLIElement>(null);
-  const pathname = usePathname();
-  const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
-
-  return (
-    <li
-      ref={ref}
-      onMouseEnter={() => {
-        if (!ref.current) return;
-        const { width } = ref.current.getBoundingClientRect();
-        setPosition({
-          width,
-          opacity: 1,
-          left: ref.current.offsetLeft,
-        });
-      }}
-      className="relative z-10 block cursor-pointer px-3 py-1.5 text-xs uppercase mix-blend-difference md:px-5 md:py-3 md:text-base"
-    >
-      <Link
-        href={href}
-        className={`font-semibold transition-colors ${isActive ? "text-white" : "text-white/80 hover:text-white"}`}
-      >
-        {children}
-      </Link>
-    </li>
-  );
-};
-
-const Cursor = ({ position }: { position: Position }) => {
-  return (
-    <motion.li
-      animate={position}
-      className="pointer-events-none absolute z-0 h-7 rounded-full bg-white/20 md:h-12"
-    />
-  );
-};
-
-export default NavHeader;

@@ -3,33 +3,39 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import NavHeader from "@/components/ui/nav-header";
 
+import { Component as EtheralShadow } from "@/components/ui/etheral-shadow";
+
 export const metadata: Metadata = {
   title: "Juice Stop",
   description: "Fresh juices, shakes & smoothies delivered to your door",
-  themeColor: "#f97316",
+};
+
+export const viewport = {
+  themeColor: "#1e3a8a", // Navy Blue
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="bg-black m-0 p-0 text-white min-h-screen antialiased">
         <Providers>
-          <div className="min-h-screen flex flex-col">
-            <header className="bg-brand-500 text-white shadow-md sticky top-0 z-40">
-              <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">🧃</span>
-                  <span className="font-bold text-xl tracking-tight">Juice Stop</span>
+          <div className="min-h-screen flex flex-col relative w-full">
+            <EtheralShadow
+              sizing="fill"
+              color="rgba(128, 128, 128, 1)"
+              animation={{ scale: 100, speed: 90 }}
+              noise={{ opacity: 1, scale: 1.2 }}
+              className="flex-1 flex flex-col w-full min-h-screen"
+            >
+              <header className="absolute top-0 left-0 w-full z-50 bg-transparent pointer-events-none">
+                <div className="w-full flex justify-center py-6 pointer-events-auto">
+                  <NavHeader />
                 </div>
-                <NavHeader />
-              </div>
-            </header>
-            <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-6">
-              {children}
-            </main>
-            <footer className="text-center text-xs text-gray-400 py-4">
-              © {new Date().getFullYear()} Juice Stop · College Residency
-            </footer>
+              </header>
+              <main className="flex-1 w-full h-full relative z-20">
+                {children}
+              </main>
+            </EtheralShadow>
           </div>
         </Providers>
       </body>
