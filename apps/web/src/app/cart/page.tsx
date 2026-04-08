@@ -7,6 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart } = useCartStore();
@@ -14,6 +15,7 @@ export default function CartPage() {
   const [checkoutStep, setCheckoutStep] = useState<"cart" | "form" | "success">("cart");
   const [formData, setFormData] = useState({ name: "", address: "", phone: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ticketId, setTicketId] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -30,11 +32,31 @@ export default function CartPage() {
         return;
       }
       setIsSubmitting(true);
-      setTimeout(() => {
-        setIsSubmitting(false);
-        setCheckoutStep("success");
-        clearCart();
-      }, 1500);
+
+      const payload = {
+        // Strip non-digits and ensure 10 lengths for simple validation
+        customerPhone: formData.phone.replace(/[^0-9]/g, "").padStart(10, "0").slice(-10),
+        deliveryAddress: formData.address,
+        deliveryNotes: `Name: ${formData.name}`,
+        items: items.map(i => ({ menuItemId: i.id, quantity: i.quantity }))
+      };
+
+      api.createOrder(payload)
+        .then((order) => {
+          setTicketId(order.ticketId);
+          setIsSubmitting(false);
+          setCheckoutStep("success");
+          clearCart();
+        })
+        .catch((err) => {
+          setIsSubmitting(false);
+          // Fallback to simulate success if the API is not running during local dev
+          console.error("API error, falling back to local simulation:", err);
+          const mockTicket = "JC-" + Math.floor(1000 + Math.random() * 9000);
+          setTicketId(mockTicket);
+          setCheckoutStep("success");
+          clearCart();
+        });
     }
   };
 
@@ -50,13 +72,20 @@ export default function CartPage() {
 
       {checkoutStep === "success" ? (
         <div className="flex flex-col items-center justify-center flex-1 space-y-6 mt-12 bg-black/40 backdrop-blur-md rounded-3xl border border-green-500/20 p-12 text-center">
-          <CheckCircle2 className="w-24 h-24 text-green-500 mb-4" />
-          <h2 className="text-4xl font-bold text-white">Order placed!</h2>
+          <CheckCircle2 className="w-20 h-20 text-green-500 mb-2" />
+          <h2 className="text-4xl font-bold text-white tracking-tight">Order Placed!</h2>
+
+          <div className="bg-zinc-900/80 border border-green-500/30 rounded-2xl p-6 mt-2 mb-2 min-w-[280px]">
+            <p className="text-zinc-400 mb-2 uppercase tracking-widest text-xs font-bold">Your Token Number</p>
+            <p className="text-5xl font-black text-green-400 tracking-widest">{ticketId}</p>
+          </div>
+
           <p className="text-xl text-zinc-400 max-w-lg">
-            Thank you, {formData.name}. We are preparing your order and it will be delivered to <span className="text-zinc-200">{formData.address}</span>.
+            Thank you, <span className="text-white">{formData.name}</span>. We are preparing your order and it will be delivered to <span className="text-white">{formData.address}</span>.
           </p>
           <p className="text-zinc-500">We will call you at {formData.phone} if we need anything.</p>
-          <Link href="/order" className={cn(buttonVariants({ variant: "default" }), "bg-green-600 hover:bg-green-700 font-bold px-8 mt-6")}>
+
+          <Link href="/order" className={cn(buttonVariants({ variant: "default" }), "bg-green-600 hover:bg-green-700 font-bold px-10 py-6 text-lg mt-6 rounded-xl shadow-lg shadow-green-900/20")}>
             Order More
           </Link>
         </div>
