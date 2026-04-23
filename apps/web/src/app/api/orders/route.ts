@@ -5,9 +5,11 @@ import { nextTicketId, orderRateLimit } from "@/lib/redis";
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "anonymous";
-  const { success: allowed } = await orderRateLimit.limit(ip);
-  if (!allowed) {
-    return NextResponse.json({ success: false, error: "Too many orders. Try again later." }, { status: 429 });
+  if (orderRateLimit) {
+    const { success: allowed } = await orderRateLimit.limit(ip);
+    if (!allowed) {
+      return NextResponse.json({ success: false, error: "Too many orders. Try again later." }, { status: 429 });
+    }
   }
 
   const body = await req.json();

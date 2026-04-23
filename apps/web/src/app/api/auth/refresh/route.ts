@@ -9,9 +9,11 @@ export async function POST(req: NextRequest) {
   }
   try {
     const payload = verifyRefresh(refreshToken);
-    const stored = await redis.get(`refresh:${payload.staffId}`);
-    if (stored !== refreshToken) {
-      return NextResponse.json({ success: false, error: "Refresh token revoked" }, { status: 401 });
+    if (redis) {
+      const stored = await redis.get(`refresh:${payload.staffId}`);
+      if (stored !== refreshToken) {
+        return NextResponse.json({ success: false, error: "Refresh token revoked" }, { status: 401 });
+      }
     }
     const accessToken = signAccess({ staffId: payload.staffId, role: payload.role });
     return NextResponse.json({ success: true, data: { accessToken } });

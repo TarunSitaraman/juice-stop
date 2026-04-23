@@ -1,6 +1,6 @@
 "use client"
 
-import { useCartStore } from "@/lib/store";
+import { useCartStore } from "@/store/cart";
 import { motion, AnimatePresence } from "framer-motion";
 import { Minus, Plus, Trash2, ArrowRight, CheckCircle2, ChevronLeft } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -19,9 +19,14 @@ export default function CartPage() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    // Self-healing: clear checkout if data is from old schema without menuItem
+    if (items.some(i => !i.menuItem)) {
+      clearCart();
+    }
+  }, [items, clearCart]);
 
-  const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const validItems = items.filter(i => i.menuItem);
+  const total = validItems.reduce((sum, item) => sum + (Number(item.menuItem.price) * item.quantity), 0);
 
   const handleCheckout = () => {
     if (checkoutStep === "cart") {
@@ -38,7 +43,7 @@ export default function CartPage() {
         customerPhone: formData.phone.replace(/[^0-9]/g, "").padStart(10, "0").slice(-10),
         deliveryAddress: formData.address,
         deliveryNotes: `Name: ${formData.name}`,
-        items: items.map(i => ({ menuItemId: i.id, quantity: i.quantity }))
+        items: validItems.map(i => ({ menuItemId: i.menuItem.id, quantity: i.quantity }))
       };
 
       api.createOrder(payload)
@@ -89,7 +94,7 @@ export default function CartPage() {
             Order More
           </Link>
         </div>
-      ) : items.length === 0 ? (
+      ) : validItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center flex-1 space-y-6 mt-12 bg-black/40 backdrop-blur-md rounded-3xl border border-white/5 p-12">
           <div className="w-24 h-24 rounded-full bg-blue-900/20 flex items-center justify-center">
             <ShoppingCartIcon className="w-10 h-10 text-blue-500" />
@@ -114,9 +119,9 @@ export default function CartPage() {
                   className="space-y-4"
                 >
                   <AnimatePresence mode="popLayout">
-                    {items.map((item) => (
+                    {validItems.map((item) => (
                       <motion.div
-                        key={item.id}
+                        key={item.menuItem.id}
                         layout
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -124,21 +129,21 @@ export default function CartPage() {
                         className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6"
                       >
                         <div className="flex-1 text-center sm:text-left">
-                          <h3 className="text-xl font-bold text-white">{item.name}</h3>
-                          <p className="text-blue-400 font-medium">₹{item.price.toFixed(2)} each</p>
+                          <h3 className="text-xl font-bold text-white">{item.menuItem.name}</h3>
+                          <p className="text-blue-400 font-medium">₹{Number(item.menuItem.price).toFixed(2)} each</p>
                         </div>
 
                         <div className="flex items-center gap-4 border border-white/10 bg-zinc-900/80 rounded-full p-1 max-w-fit mx-auto sm:mx-0">
                           <div className="flex items-center">
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
                               className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
                             >
                               <Minus className="w-4 h-4" />
                             </button>
                             <span className="w-8 text-center font-bold text-white">{item.quantity}</span>
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
                               className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors border-r border-white/10 mr-2 pr-2"
                             >
                               <Plus className="w-4 h-4" />
@@ -146,9 +151,9 @@ export default function CartPage() {
                           </div>
 
                           <div className="flex items-center gap-4 pl-2 pr-1">
-                            <span className="text-xl font-black text-white w-20 text-center">₹{(item.price * item.quantity).toFixed(2)}</span>
+                            <span className="text-xl font-black text-white w-20 text-center">₹{(Number(item.menuItem.price) * item.quantity).toFixed(2)}</span>
                             <button
-                              onClick={() => removeItem(item.id)}
+                              onClick={() => removeItem(item.menuItem.id)}
                               className="text-red-400/80 hover:text-red-400 hover:bg-red-400/10 p-2 rounded-full transition-colors"
                             >
                               <Trash2 className="w-5 h-5" />

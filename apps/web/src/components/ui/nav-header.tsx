@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useCartStore } from "@/lib/store";
+import { useCartStore } from "@/store/cart";
 
 const TABS = [
   { label: "Home", href: "/" },

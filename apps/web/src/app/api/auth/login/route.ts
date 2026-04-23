@@ -21,7 +21,9 @@ export async function POST(req: NextRequest) {
   const accessToken = signAccess(payload);
   const refreshToken = signRefresh(payload);
 
-  await redis.set(`refresh:${staff.id}`, refreshToken, { ex: 60 * 60 * 24 * 7 });
+  if (redis) {
+    await redis.set(`refresh:${staff.id}`, refreshToken, { ex: 60 * 60 * 24 * 7 });
+  }
 
   return NextResponse.json({
     success: true,

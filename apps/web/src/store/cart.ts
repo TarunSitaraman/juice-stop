@@ -60,7 +60,8 @@ export const useCartStore = create<CartStore>()(
 
       totalAmount: () =>
         get().items.reduce(
-          (sum, i) => sum + Number(i.menuItem.price) * i.quantity,
+          // ✅ AFTER - safely skips items with missing menuItem
+          (sum, i) => sum + Number(i.menuItem?.price ?? 0) * i.quantity,
           0
         ),
 
