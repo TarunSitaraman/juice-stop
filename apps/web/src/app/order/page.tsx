@@ -95,14 +95,16 @@ export default function OrderPage() {
                   </h2>
                 </div>
                 
-                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center w-full">
                   {category.items.map((product, idx) => (
                     <ProductRevealCard 
                       key={product.id || idx} 
                       name={product.name} 
+                      description={product.description}
+                      imageUrl={product.imageUrl}
                       price={formatPrice(product.price)} 
                       onAdd={() => addItemToCart(product)}
-                      className="w-full bg-zinc-900 border-zinc-800 h-32" 
+                      className="w-full" 
                     />
                   ))}
                 </div>
